@@ -1,0 +1,56 @@
+# ---------------------------------------------------------------------------
+# DATA - NEVER COMMIT. Electoral-roll PDFs and the Excel files built from them
+# contain personal data (names, relatives, addresses, ages, EPIC numbers).
+# ---------------------------------------------------------------------------
+input/
+output/
+*.pdf
+*.xlsx
+*.xls
+*.csv
+*.partial
+*.tmp.xlsx
+_organize_logs/
+_download_log.xlsx
+*.log
+
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# ---------------------------------------------------------------------------
+# Secrets / local config
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+.claude/settings.local.json
+
+# ---------------------------------------------------------------------------
+# Editors / OS
+# ---------------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+~$*
