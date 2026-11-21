@@ -1,8 +1,13 @@
-# ECI Electoral Roll → Excel (Punjab 2027 Draft Roll)
+# ECI Electoral Roll → Excel (2027 Draft Roll: Punjab + Uttar Pradesh)
 
 Download, organise and extract the **Election Commission of India 2027 draft electoral
-rolls** (Punjab, state code `S19`, Punjabi/Gurmukhi PDFs) into validated Excel workbooks:
-one row per voter, plus part-level metadata and a full validation report.
+rolls** into validated Excel workbooks: one row per voter, plus part-level metadata and
+a full validation report.
+
+| State | Code | Language | Extractor |
+|---|---|---|---|
+| Punjab | `S19` | Punjabi (Gurmukhi), `PAN` files | `extract_voters_2027.py` |
+| Uttar Pradesh | `S24` | Hindi (Devanagari), `HIN` files | `extract_voters_up_2027.py` |
 
 > **Data privacy:** the PDFs and the Excel files built from them contain personal data
 > (names, relatives, house addresses, ages, EPIC numbers). They are git-ignored and must
@@ -16,10 +21,12 @@ one row per voter, plus part-level metadata and a full validation report.
 |---|---|---|
 | 1. Download | `download_rolls.py` | ECI website → `input/S19/AC<ac>/<part>.pdf` (verified PDFs) |
 | 2. Organise *(only for bulk downloads with original names)* | `organize_rolls.py` | `2027-EROLLGEN-S19-86-…-PAN-18-WI.pdf` → `<dest>/S19/AC86/18.pdf` |
-| 3. Extract + validate | `extract_voters_2027.py` | `input/S19/AC*/` → `output/<AC>.xlsx` + `output/RUN_SUMMARY.xlsx` |
+| 3. Extract + validate | `extract_voters_2027.py` (S19) / `extract_voters_up_2027.py` (S24) | `input/<STATE>/AC*/` → `output/<AC>.xlsx` + `output/RUN_SUMMARY.xlsx` |
 
-Tested on 234 PDFs (2 random parts from every one of Punjab's 117 assembly
-constituencies, 186,238 voters): **all validation checks pass; 0 errors**.
+Tested, **all validation checks pass with 0 errors**:
+
+* Punjab: 234 PDFs (2 random parts from each of the 117 ACs), 186,238 voters.
+* Uttar Pradesh: 403 PDFs (1 random part from each of the 403 ACs), 309,733 voters.
 
 ## Setup
 
@@ -78,6 +85,19 @@ python extract_voters_2027.py input/S19 -o output --force   # redo ACs already d
 * Speed: ~0.4 s per PDF with `-w 8` on a 4-core laptop → full Punjab ≈ 2.5–3 h.
   Memory ≈ 0.55 GB per worker for a 200-part AC (use `-w 4` on 8 GB RAM).
 
+### Uttar Pradesh (S24, Hindi)
+
+```bash
+python download_rolls.py --state S24 --lang HIN --acs 1-403 --per-ac 1   # sample: 1 random part per AC
+python download_rolls.py --state S24 --lang HIN --acs 1-403 --parts all  # everything
+python extract_voters_up_2027.py input/S24 -o output/S24 -w 6            # same options as above
+```
+
+* Same workbook layout; Hindi-specific columns: `block`, `panchayat`, `post_office`,
+  `relation_type_hi`, `gender_hi` (see [docs/DATA_DICTIONARY.md](docs/DATA_DICTIONARY.md)).
+* Speed: ~0.6 s per PDF with `-w 6` (403 PDFs in ≈ 4.3 min). Hindi PDFs need extra
+  checks (see [docs/PDF_LAYOUT_UP.md](docs/PDF_LAYOUT_UP.md)).
+
 ## Output
 
 See [docs/DATA_DICTIONARY.md](docs/DATA_DICTIONARY.md) for every column.
@@ -104,6 +124,9 @@ Every PDF is validated; see [docs/VALIDATION.md](docs/VALIDATION.md).
   agree on every field of every voter.
 * Page footers (AC, part, dates, page x of N) agree with the cover on every page.
 * Field checks: EPIC present, name, relation, age 18–125, gender; no unparsed text.
+* **UP only – glyph check:** on every page the extracted characters must equal the
+  characters of the glyphs actually drawn (catches wrong font maps and hidden-text
+  artefacts in the Hindi PDFs).
 
 Values are kept **exactly as printed** (including odd EPICs, Hindi-script names and
 legacy-font glyphs); unusual values are flagged in `warnings`, never "corrected".
@@ -113,20 +136,22 @@ legacy-font glyphs); unusual values are flagged in `warnings`, never "corrected"
 ```
 download_rolls.py         step 1 - download + verify PDFs
 organize_rolls.py         step 2 - safe bulk re-organiser (optional)
-extract_voters_2027.py    step 3 - PDF -> Excel extractor + validator
+extract_voters_2027.py    step 3 - PDF -> Excel extractor + validator (Punjab, S19)
+extract_voters_up_2027.py step 3 - same for Uttar Pradesh (S24, Hindi)
 requirements.txt
 AGENTS.md                 instructions/context for AI coding agents (and humans)
 CLAUDE.md                 Claude Code entry point (imports AGENTS.md)
 docs/
   DATA_DICTIONARY.md      every output column
-  PDF_LAYOUT.md           structure of the ECI PDFs + variants handled
-  VALIDATION.md           checks, test procedure, latest results
-input/   (git-ignored)    PDFs:  input/S19/AC<ac>/<part>.pdf
+  PDF_LAYOUT.md           structure of the Punjab PDFs + variants handled
+  PDF_LAYOUT_UP.md        Uttar Pradesh (Hindi) PDFs: differences, text-layer quirks
+  VALIDATION.md           checks, test procedure, latest results (both states)
+input/   (git-ignored)    PDFs:  input/<STATE>/AC<ac>/<part>.pdf
 output/  (git-ignored)    Excel output
 ```
 
 ## Limitations
 
-* Built for the **Punjabi (S19) 2027 draft-roll layout**. Other states/languages
-  (e.g. `S24` Uttar Pradesh, Hindi) need their labels added — see AGENTS.md.
+* Built for the **2027 draft-roll layouts of Punjab (S19) and Uttar Pradesh (S24)**.
+  Other states/languages need their own labels and a sample test — see AGENTS.md.
 * Text is taken from the PDF text layer (no OCR). Scanned/image-only PDFs are not supported.

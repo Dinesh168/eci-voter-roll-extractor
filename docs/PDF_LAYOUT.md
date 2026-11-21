@@ -1,5 +1,7 @@
 # ECI 2027 draft-roll PDF layout (Punjab, S19)
 
+> Uttar Pradesh (S24, Hindi) differences and text-layer quirks: [PDF_LAYOUT_UP.md](PDF_LAYOUT_UP.md).
+
 File name: `2027-EROLLGEN-S19-<ac>-SSR-DraftRoll-Revision1-PAN-<part>-WI.pdf`
 URL: `https://voters.eci.gov.in/eroll/2027/s19/ssr-draftroll/<ac>/<file name>`
 Producer: iText Core 8 + pdfCalligraph. Text-based PDF (real Unicode text layer, font

@@ -73,3 +73,54 @@ The Excel equals the PDF's text content, verified by counts, two independent
 segmentations, a second PDF engine and visual checks. Where the PDF itself prints
 something odd (Hindi script, legacy glyphs such as `Ã`, non-standard EPICs, blank
 fields) the value is kept exactly and flagged — it is not "corrected".
+
+---
+
+# Uttar Pradesh (S24, Hindi): `extract_voters_up_2027.py`
+
+All Punjab checks above apply (Hindi labels). Additional checks:
+
+| Check | Rule | Level |
+|---|---|---|
+| `glyph_check` | on every page, the multiset of extracted characters (ActualText, after proven repairs) equals the multiset of characters of the glyphs actually drawn (after verified font-map fixes) | ERROR |
+| `text_outside_cards` | any text on a voter page that is not inside a card or a known header/footer | ERROR |
+| `render_quirk` | the only difference between text and drawing is a known producer rendering quirk (consonant drawn twice around a reph; `रृ` drawn as reph + `ऋ`), every predicted occurrence present and nothing else different; the text value is kept | WARN |
+
+Repairs of the hidden text (zero-width duplicates, doubled signs, repeated pieces) are
+applied to a line **only when the repaired line has exactly the drawn characters of that
+line** and the unrepaired one does not; otherwise the text is left as is and
+`glyph_check` fails the page. Counted per PDF in `actualtext_repairs`.
+
+## Regression test (UP)
+
+```bash
+python download_rolls.py --state S24 --lang HIN --acs 1-403 --per-ac 1   # seed 2027: 1 random part x 403 ACs
+python extract_voters_up_2027.py input/S24 -o output/S24_test -w 6 --force
+```
+
+## Latest results (2026-11-21)
+
+Sample: 403 PDFs (1 random part from each of the 403 ACs, seed `2027`).
+
+| Metric | Result |
+|---|---|
+| ACs PASS | **403 / 403** |
+| Voters extracted | **309,733** = sum of cover totals **309,733** |
+| ERRORs | **0** (incl. glyph check on every page of every PDF) |
+| Stream vs card-box cross-check | identical on every field of every voter |
+| WARNs | 136 — `metadata_blank` 71, `epic_format` 53, `render_quirk` 12 |
+| Rows with a `warnings` flag | 4,883 (1.6%; mostly digits such as `मो0` or Latin letters in names, blank house no.) |
+| Hidden-text repairs (proven by drawn glyphs) | 22,392 lines |
+| Font-map entries corrected in memory | 3,418 |
+| Gender | Male 168,547 · Female 141,170 · Third gender 16 |
+| Relation | Father 185,449 · Husband 120,144 · Other 2,215 · Mother 1,925 |
+| Run time | 4.3 min with `-w 6` |
+
+Extra independent checks done once on this sample:
+
+* **Visual:** 12 random cards plus 20 cards with repaired/unusual names (joiner
+  duplicates, `न्न` ligatures, candrabindu, render quirks) rendered at 220–1200 dpi and
+  compared by eye with the Excel row: all identical to the printed text (render-quirk
+  names hold the hidden-text value, as designed).
+* **Glyph verification:** every glyph in `GLYPH_FIXES` was drawn from the embedded font
+  outlines and its identity confirmed visually.
